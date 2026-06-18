@@ -10,10 +10,18 @@ export function createApp() {
   const app = express()
 
   app.use(helmet())
-  app.use(cors({
-    origin: env.clientOrigins.includes('*') ? true : env.clientOrigins,
-    credentials: true,
-  }))
+  // Allow: configured origins, localhost (any port), and any *.vercel.app
+  // deployment — so the hosted frontends work without re-listing each domain.
+  const corsOrigin = (origin, cb) => {
+    if (!origin) return cb(null, true) // same-origin / curl / server-to-server
+    if (env.clientOrigins.includes('*') || env.clientOrigins.includes(origin)) return cb(null, true)
+    try {
+      const host = new URL(origin).hostname
+      if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.vercel.app')) return cb(null, true)
+    } catch {}
+    return cb(null, false)
+  }
+  app.use(cors({ origin: corsOrigin, credentials: true }))
   app.use(express.json({ limit: '2mb' }))
   app.use(express.urlencoded({ extended: true }))
   if (env.nodeEnv !== 'test') app.use(morgan('dev'))
