@@ -18,6 +18,9 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }))
   if (env.nodeEnv !== 'test') app.use(morgan('dev'))
 
+  app.get('/', (_req, res) =>
+    res.json({ success: true, name: 'Jain Patashala API', docs: '/api', health: '/health' })
+  )
   app.get('/health', (_req, res) => res.json({ success: true, status: 'ok' }))
   app.use('/api', routes)
 
